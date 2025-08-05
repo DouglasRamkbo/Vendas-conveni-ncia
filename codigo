@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro Brava Conveniência</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #111827;
+            --text-color: #f9fafb;
+            --card-bg: #1f2937;
+            --border-color: #374151;
+            --input-bg: #374151;
+            --tab-inactive-bg: transparent;
+            --tab-inactive-text: #d1d5db;
+        }
+        html.light {
+            --bg-color: #f9fafb;
+            --text-color: #111827;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --input-bg: #f3f4f6;
+            --tab-inactive-bg: #e5e7eb;
+            --tab-inactive-text: #374151;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .card {
+             background-color: var(--card-bg);
+             border: 1px solid var(--border-color);
+        }
+        .input-field {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+        .tab-inactive {
+             background-color: var(--tab-inactive-bg);
+             color: var(--tab-inactive-text);
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--card-bg); }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .custom-loader {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 8px solid #4b5563;
+            border-top-color: #6366f1;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input[type="date"]::-webkit-calendar-picker-indicator, select::-webkit-calendar-picker-indicator { 
+            filter: var(--bg-color) === '#111827' ? invert(0.8) : invert(0.2);
+            cursor: pointer; 
+        }
+        .tab-active {
+            background-color: #4f46e5;
+            color: #ffffff;
+            border-bottom-color: #4f46e5;
+        }
+        /* Estilos para Toast */
+        #toast-container {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .toast {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateX(120%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast-success { background-color: #22c55e; }
+        .toast-error { background-color: #ef4444; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="loader" class="fixed inset-0 bg-gray-900 bg-opacity-80 flex justify-center items-center z-50">
+        <div class="custom-loader"></div>
+    </div>
+    
+    <div class="absolute top-4 right-4">
+        <button id="theme-toggle" class="p-2 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+            <svg id="theme-toggle-dark-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+            <svg id="theme-toggle-light-icon" class="w-6 h-6 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 5.05A1 1 0 003.636 6.464l.707.707a1 1 0 001.414-1.414l-.707-.707zM3 11a1 1 0 100-2H2a1 1 0 100 2h1zM6.464 16.364a1 1 0 01-1.414 0l-.707-.707a1 1 0 011.414-1.414l.707.707a1 1 0 010 1.414z"></path></svg>
+        </button>
+    </div>
+
+    <div id="app-content" class="container mx-auto p-4 md:p-8 max-w-7xl hidden">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-indigo-400">Controle Financeiro Brava Conveniência</h1>
+        </header>
+
+        <!-- Abas de Navegação -->
+        <div class="mb-8 flex flex-wrap justify-center border-b" style="border-color: var(--border-color);">
+            <button id="tab-vendas-diarias" class="py-3 px-6 font-semibold rounded-t-lg transition-colors duration-300 border-b-2">Vendas Diárias</button>
+            <button id="tab-anteriores" class="py-3 px-6 font-semibold rounded-t-lg transition-colors duration-300 border-b-2">Lançar Dias Anteriores</button>
+            <button id="tab-boletos" class="py-3 px-6 font-semibold rounded-t-lg transition-colors duration-300 border-b-2">Controle de Boletos</button>
+            <button id="tab-recorrentes" class="py-3 px-6 font-semibold rounded-t-lg transition-colors duration-300 border-b-2">Lançamentos Recorrentes</button>
+            <button id="tab-dashboard" class="py-3 px-6 font-semibold rounded-t-lg transition-colors duration-300 border-b-2">Painel Geral</button>
+            <button id="tab-relatorios" class="py-3 px-6 font-semibold rounded-t-lg transition-colors duration-300 border-b-2">Relatórios</button>
+        </div>
+
+        <!-- Conteúdo da Aba Vendas Diárias -->
+        <div id="view-vendas-diarias">
+            <div class="text-center mb-6">
+                 <label for="datePicker" class="block text-sm font-medium mb-2">Data dos Lançamentos:</label>
+                <input type="date" id="datePicker" class="input-field rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Coluna Esquerda: Histórico de Vendas -->
+                <div class="lg:col-span-2">
+                    <section>
+                        <h2 class="text-2xl font-bold mb-4">Histórico do Dia <span id="dataHistorico" class="text-indigo-400"></span></h2>
+                        <div id="listaVendas" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2"></div>
+                    </section>
+                </div>
+
+                <!-- Coluna Direita: Nova Venda e Totais -->
+                <div>
+                    <section class="card p-6 rounded-lg shadow-lg mb-8">
+                        <h2 class="text-2xl font-bold mb-4">Novo Lançamento</h2>
+                        <form id="vendaForm">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium mb-2">Tipo de Lançamento</label>
+                                <div class="flex space-x-4">
+                                    <label class="flex items-center"><input type="radio" name="tipo_lancamento" value="entrada" checked class="form-radio h-4 w-4 text-indigo-600 border-gray-600 focus:ring-indigo-500"><span class="ml-2">Entrada</span></label>
+                                    <label class="flex items-center"><input type="radio" name="tipo_lancamento" value="saida" class="form-radio h-4 w-4 text-indigo-600 border-gray-600 focus:ring-indigo-500"><span class="ml-2">Saída</span></label>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="valor" class="block text-sm font-medium mb-1">Valor (R$)</label>
+                                <input type="number" id="valor" step="0.01" placeholder="Ex: 25,50" required class="w-full input-field rounded-md p-2">
+                            </div>
+                             <div id="descricaoContainer" class="mb-4 hidden">
+                                <label for="descricao" class="block text-sm font-medium mb-1">Descrição da Saída</label>
+                                <input type="text" id="descricao" placeholder="Ex: Compra de gelo" class="w-full input-field rounded-md p-2">
+                            </div>
+                            <div id="formaPagamentoContainer" class="mb-6">
+                                <label class="block text-sm font-medium mb-2">Forma de Pagamento</label>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <button type="button" data-payment="pix" class="payment-method-btn bg-indigo-600 text-white font-bold py-3 px-4 rounded-md transition duration-200">PIX</button>
+                                    <button type="button" data-payment="cartao" class="payment-method-btn bg-gray-700 text-white font-bold py-3 px-4 rounded-md transition duration-200">Cartão</button>
+                                    <button type="button" data-payment="dinheiro" class="payment-method-btn bg-gray-700 text-white font-bold py-3 px-4 rounded-md transition duration-200">Dinheiro</button>
+                                    <button type="button" data-payment="ifood" class="payment-method-btn bg-gray-700 text-white font-bold py-3 px-4 rounded-md transition duration-200">iFood</button>
+                                </div>
+                                <input type="hidden" id="forma_pagamento_selecionada" name="forma_pagamento" value="pix">
+                            </div>
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-md transition transform hover:scale-105 shadow-lg">Adicionar Lançamento</button>
+                        </form>
+                    </section>
+                    <section class="card p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-bold mb-4">Resumo do Dia</h2>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center"><p>Total PIX:</p><p id="totalPix" class="text-lg font-bold">R$ 0,00</p></div>
+                            <div class="flex justify-between items-center"><p>Total Cartão:</p><p id="totalCartao" class="text-lg font-bold">R$ 0,00</p></div>
+                            <div class="flex justify-between items-center"><p>Total Dinheiro:</p><p id="totalDinheiro" class="text-lg font-bold">R$ 0,00</p></div>
+                            <div class="flex justify-between items-center"><p>Total iFood:</p><p id="totalIfood" class="text-lg font-bold">R$ 0,00</p></div>
+                            <hr class="my-2" style="border-color: var(--border-color);">
+                            <div class="flex justify-between items-center text-green-400"><p class="font-semibold">Total Vendas:</p><p id="totalEntradas" class="text-xl font-bold">R$ 0,00</p></div>
+                            <div class="flex justify-between items-center text-red-400"><p class="font-semibold">Total Saídas:</p><p id="totalSaidas" class="text-xl font-bold">R$ 0,00</p></div>
+                            <hr class="my-2" style="border-color: var(--border-color);">
+                            <div class="flex justify-between items-center text-blue-400"><p class="text-lg font-semibold">Saldo do Dia:</p><p id="saldoAtual" class="text-2xl font-bold">R$ 0,00</p></div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo da Aba de Lançamentos Anteriores -->
+        <div id="view-anteriores" class="hidden">
+            <section class="card p-6 rounded-lg shadow-lg mb-8 max-w-3xl mx-auto">
+                <h2 class="text-2xl font-bold mb-4">Adicionar Totais de um Dia Anterior</h2>
+                <form id="consolidadoForm">
+                    <div class="mb-4">
+                        <label for="consolidadoDate" class="block text-sm font-medium mb-1">Data do Lançamento</label>
+                        <input type="date" id="consolidadoDate" required class="w-full input-field rounded-md p-2">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="consolidadoPix" class="block text-sm font-medium mb-1">Total PIX (R$)</label>
+                            <input type="number" id="consolidadoPix" step="0.01" placeholder="0,00" class="w-full input-field rounded-md p-2">
+                        </div>
+                        <div>
+                            <label for="consolidadoCartao" class="block text-sm font-medium mb-1">Total Cartão (R$)</label>
+                            <input type="number" id="consolidadoCartao" step="0.01" placeholder="0,00" class="w-full input-field rounded-md p-2">
+                        </div>
+                        <div>
+                            <label for="consolidadoDinheiro" class="block text-sm font-medium mb-1">Total Dinheiro (R$)</label>
+                            <input type="number" id="consolidadoDinheiro" step="0.01" placeholder="0,00" class="w-full input-field rounded-md p-2">
+                        </div>
+                        <div>
+                            <label for="consolidadoIfood" class="block text-sm font-medium mb-1">Total iFood (R$)</label>
+                            <input type="number" id="consolidadoIfood" step="0.01" placeholder="0,00" class="w-full input-field rounded-md p-2">
+                        </div>
+                        <div class="md:col-span-2">
+                             <label for="consolidadoSaidas" class="block text-sm font-medium mb-1">Total Saídas (caixa)</label>
+                            <input type="number" id="consolidadoSaidas" step="0.01" placeholder="0,00" class="w-full input-field rounded-md p-2">
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md">Adicionar Lançamentos Consolidados</button>
+                </form>
+            </section>
+        </div>
+
+        <!-- Conteúdo da Aba de Boletos -->
+        <div id="view-boletos" class="hidden">
+            <section id="summary-boletos" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="card p-4 rounded-lg shadow-lg text-center">
+                    <h2 class="text-lg font-semibold text-blue-400">Boletos no Filtro</h2>
+                    <p id="boletosFiltradosCount" class="text-2xl font-bold mt-2">0</p>
+                </div>
+                <div class="card p-4 rounded-lg shadow-lg text-center">
+                    <h2 class="text-lg font-semibold text-purple-400">Valor Total do Filtro</h2>
+                    <p id="boletosFiltradosValor" class="text-2xl font-bold mt-2">R$ 0,00</p>
+                </div>
+            </section>
+             <section class="card p-6 rounded-lg shadow-lg mb-8">
+                <h2 class="text-2xl font-bold mb-4">Adicionar Novo Boleto</h2>
+                <form id="boletoForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="fornecedor" class="block text-sm font-medium mb-1">Fornecedor</label>
+                        <input type="text" id="fornecedor" placeholder="Ex: Cia de Energia" required class="w-full input-field rounded-md p-2">
+                    </div>
+                    <div>
+                        <label for="valor_boleto" class="block text-sm font-medium mb-1">Valor (R$)</label>
+                        <input type="number" id="valor_boleto" step="0.01" placeholder="150,00" required class="w-full input-field rounded-md p-2">
+                    </div>
+                     <div class="md:col-span-2">
+                        <label for="codigo_barras" class="block text-sm font-medium mb-1">Código de Barras (Opcional)</label>
+                        <input type="text" id="codigo_barras" placeholder="00190..." class="w-full input-field rounded-md p-2">
+                    </div>
+                    <div>
+                        <label for="data_entrada" class="block text-sm font-medium mb-1">Data de Entrada</label>
+                        <input type="date" id="data_entrada" required class="w-full input-field rounded-md p-2">
+                    </div>
+                     <div>
+                        <label for="data_vencimento" class="block text-sm font-medium mb-1">Data de Vencimento</label>
+                        <input type="date" id="data_vencimento" required class="w-full input-field rounded-md p-2">
+                    </div>
+                    <div class="md:col-span-2"><button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-md transition transform hover:scale-105 shadow-lg">Salvar Boleto</button></div>
+                </form>
+            </section>
+            <section class="card p-6 rounded-lg shadow-lg mb-8">
+                <h2 class="text-2xl font-bold mb-4">Importar Boletos em Lote</h2>
+                <textarea id="bulkBoletos" rows="8" class="w-full input-field rounded-md p-2" placeholder="Cole os dados dos boletos aqui, separados por tabulação: CÓDIGO_BARRAS (opcional)    FORNECEDOR    DATA_ENTRADA(dd/mm/aaaa)    DATA_VENCIMENTO(dd/mm/aaaa)    VALOR(R$ 123,45)"></textarea>
+                <button id="importBoletosBtn" class="mt-4 w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-md transition transform hover:scale-105 shadow-lg">Importar Agora</button>
+            </section>
+            <section>
+                <div class="card p-4 rounded-lg shadow-lg mb-6">
+                    <h3 class="text-xl font-bold mb-4">Filtros e Ações</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        <div>
+                            <label class="text-sm font-medium">Filtrar por Vencimento:</label>
+                            <div class="flex items-center gap-2 mt-2">
+                                <input type="date" id="filterStartDate" class="w-full input-field rounded-md p-2 text-sm">
+                                <span class="text-gray-400">até</span>
+                                <input type="date" id="filterEndDate" class="w-full input-field rounded-md p-2 text-sm">
+                            </div>
+                             <div class="flex items-center gap-2 mt-2">
+                                <button id="filterBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm">Filtrar</button>
+                                <button id="clearFilterBtn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md text-sm">Limpar</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium">Ações em Massa:</label>
+                             <div class="flex items-center gap-2 mt-2">
+                                <button id="deleteSelectedBtn" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-md text-sm">Excluir Selecionados</button>
+                                <button id="deleteAllBtn" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-md text-sm">Excluir Todos</button>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold">Boletos Cadastrados</h2>
+                    <div class="flex items-center gap-4">
+                        <input type="search" id="searchBoletos" placeholder="Buscar por fornecedor ou valor..." class="input-field rounded-md p-2 w-64">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="selectAllCheckbox" class="h-5 w-5 rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                            <label for="selectAllCheckbox" class="ml-2 text-sm font-medium">Selecionar Todos</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="listaBoletos" class="space-y-3"></div>
+            </section>
+        </div>
+        
+        <!-- Conteúdo da Aba de Lançamentos Recorrentes -->
+        <div id="view-recorrentes" class="hidden">
+            <section class="card p-6 rounded-lg shadow-lg mb-8">
+                <h2 class="text-2xl font-bold mb-4">Adicionar Lançamento Recorrente</h2>
+                <p class="mb-4 text-sm">Cadastre despesas fixas (como aluguel, salários) uma vez e lance-as todo mês com um único clique.</p>
+                <form id="recorrenteForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <input type="text" id="recorrenteFornecedor" placeholder="Fornecedor" required class="w-full input-field rounded-md p-2">
+                    <input type="number" id="recorrenteValor" step="0.01" placeholder="Valor (R$)" required class="w-full input-field rounded-md p-2">
+                    <input type="number" id="recorrenteDia" min="1" max="31" placeholder="Dia do Vencimento" required class="w-full input-field rounded-md p-2">
+                    <button type="submit" class="md:col-span-3 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-md">Salvar Recorrente</button>
+                </form>
+            </section>
+            <section>
+                <h2 class="text-2xl font-bold mb-4">Lançamentos Recorrentes Salvos</h2>
+                <div id="listaRecorrentes" class="space-y-3"></div>
+            </section>
+        </div>
+        
+        <!-- Conteúdo da Aba Dashboard -->
+        <div id="view-dashboard" class="hidden">
+             <div class="card p-6 rounded-lg shadow-lg mb-8">
+                <h2 class="text-2xl font-bold mb-4 text-center">Painel Geral</h2>
+                <div class="flex justify-center items-center gap-4">
+                    <label for="dashboardMonth" class="text-sm font-medium">Mês:</label>
+                    <select id="dashboardMonth" class="input-field rounded-md p-2"></select>
+                    <label for="dashboardYear" class="text-sm font-medium">Ano:</label>
+                    <select id="dashboardYear" class="input-field rounded-md p-2"></select>
+                </div>
+            </div>
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold mb-4 text-indigo-400">Resumo de Hoje</h2>
+                    <div class="space-y-3">
+                        <div><p>Total de Vendas:</p><p id="dash-vendas-hoje" class="text-2xl font-bold text-green-400">R$ 0,00</p></div>
+                        <div><p>Total de Saídas:</p><p id="dash-saidas-hoje" class="text-2xl font-bold text-red-400">R$ 0,00</p></div>
+                        <hr class="my-2" style="border-color: var(--border-color);">
+                        <div><p>Saldo do Dia:</p><p id="dash-saldo-hoje" class="text-2xl font-bold">R$ 0,00</p></div>
+                    </div>
+                </div>
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold mb-4 text-indigo-400">Resumo do Mês Selecionado</h2>
+                    <div class="space-y-3">
+                        <div><p>Lucro Bruto (Vendas):</p><p id="dash-lucro-bruto-mes" class="text-2xl font-bold text-green-400">R$ 0,00</p></div>
+                        <div><p>Total de Despesas:</p><p id="dash-despesas-mes" class="text-2xl font-bold text-red-400">R$ 0,00</p></div>
+                        <hr class="my-2" style="border-color: var(--border-color);">
+                        <div><p>Lucro Líquido:</p><p id="dash-lucro-liquido-mes" class="text-2xl font-bold">R$ 0,00</p></div>
+                    </div>
+                </div>
+                <div class="card p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-bold mb-4 text-indigo-400">Próximos Boletos a Vencer</h2>
+                    <div id="dash-proximos-boletos" class="space-y-3 max-h-48 overflow-y-auto">
+                        <p class="text-gray-500">Nenhum boleto vencendo.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Conteúdo da Aba de Relatórios -->
+        <div id="view-relatorios" class="hidden">
+            <section class="card p-6 rounded-lg shadow-lg mb-8">
+                <h2 class="text-2xl font-bold mb-4">Análise de Período</h2>
+                 <div class="flex flex-wrap items-center justify-center gap-2 mb-4">
+                    <button id="quick-filter-this-month" class="bg-gray-600 hover:bg-gray-700 text-white text-sm font-bold py-2 px-3 rounded-md transition">Este Mês</button>
+                    <button id="quick-filter-last-month" class="bg-gray-600 hover:bg-gray-700 text-white text-sm font-bold py-2 px-3 rounded-md transition">Mês Passado</button>
+                    <button id="quick-filter-this-year" class="bg-gray-600 hover:bg-gray-700 text-white text-sm font-bold py-2 px-3 rounded-md transition">Este Ano</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div>
+                        <label for="relatorioStartDate" class="block text-sm font-medium mb-1">Data de Início</label>
+                        <input type="date" id="relatorioStartDate" class="w-full input-field rounded-md p-2">
+                    </div>
+                    <div>
+                        <label for="relatorioEndDate" class="block text-sm font-medium mb-1">Data de Fim</label>
+                        <input type="date" id="relatorioEndDate" class="w-full input-field rounded-md p-2">
+                    </div>
+                    <button id="gerarRelatorioBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md">Gerar Relatório</button>
+                </div>
+                <div id="export-buttons" class="hidden mt-4 flex justify-center gap-4">
+                    <button id="export-csv-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">Exportar para CSV</button>
+                    <button id="export-pdf-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-md">Exportar para PDF</button>
+                </div>
+            </section>
+
+            <div id="relatorio-content" class="hidden">
+                <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="card p-4 rounded-lg shadow-lg text-center"><h3 class="text-lg font-semibold text-green-400">Total de Vendas</h3><p id="relatorioLucroBruto" class="text-2xl font-bold mt-2"></p></div>
+                    <div class="card p-4 rounded-lg shadow-lg text-center"><h3 class="text-lg font-semibold text-red-400">Total de Despesas</h3><p id="relatorioDespesas" class="text-2xl font-bold mt-2"></p></div>
+                    <div class="card p-4 rounded-lg shadow-lg text-center"><h3 class="text-lg font-semibold text-indigo-400">Lucro Líquido</h3><p id="relatorioLucroLiquido" class="text-2xl font-bold mt-2"></p></div>
+                    <div class="card p-4 rounded-lg shadow-lg text-center"><h3 class="text-lg font-semibold text-teal-400">Margem de Lucro</h3><p id="relatorioMargemLucro" class="text-2xl font-bold mt-2"></p></div>
+                </section>
+
+                <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="card p-6 rounded-lg shadow-lg"><h3 class="text-xl font-bold mb-4 text-center">Vendas por Tipo de Pagamento</h3><canvas id="vendasPorTipoChart"></canvas></div>
+                    <div class="card p-6 rounded-lg shadow-lg"><h3 class="text-xl font-bold mb-4 text-center">Top 5 Fornecedores (Despesas)</h3><canvas id="topFornecedoresChart"></canvas></div>
+                    <div class="card p-6 rounded-lg shadow-lg"><h3 class="text-xl font-bold mb-4 text-center">Vendas por Dia da Semana</h3><canvas id="vendasDiaSemanaChart"></canvas></div>
+                    <div class="card p-6 rounded-lg shadow-lg"><h3 class="text-xl font-bold mb-4 text-center">Análise por Hora</h3><canvas id="ticketMedioHoraChart"></canvas></div>
+                </section>
+                 <section class="card p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-bold mb-4 text-center">Lucro Líquido por Dia</h3>
+                    <canvas id="lucroLiquidoDiaChart"></canvas>
+                </section>
+            </div>
+             <div id="relatorio-placeholder" class="text-center py-12">
+                <p>Selecione um período e clique em "Gerar Relatório" para ver a análise.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Edit Modal -->
+    <div id="editLancamentoModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center p-4 z-50">
+        <div class="card rounded-lg shadow-xl p-6 max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-6 text-center">Editar Lançamento</h2>
+            <form id="editLancamentoForm">
+                <input type="hidden" id="editLancamentoId">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Tipo de Lançamento</label>
+                    <div class="flex space-x-4">
+                        <label class="flex items-center"><input type="radio" name="edit_tipo_lancamento" value="entrada" class="form-radio h-4 w-4"><span class="ml-2">Entrada</span></label>
+                        <label class="flex items-center"><input type="radio" name="edit_tipo_lancamento" value="saida" class="form-radio h-4 w-4"><span class="ml-2">Saída</span></label>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="editValor" class="block text-sm font-medium mb-1">Valor (R$)</label>
+                    <input type="number" id="editValor" step="0.01" required class="w-full input-field rounded-md p-2">
+                </div>
+                <div id="editDescricaoContainer" class="mb-4">
+                    <label for="editDescricao" class="block text-sm font-medium mb-1">Descrição</label>
+                    <input type="text" id="editDescricao" class="w-full input-field rounded-md p-2">
+                </div>
+                <div id="editFormaPagamentoContainer" class="mb-6">
+                    <label class="block text-sm font-medium mb-2">Forma de Pagamento</label>
+                    <select id="editFormaPagamento" class="w-full input-field rounded-md p-2">
+                        <option value="pix">PIX</option>
+                        <option value="cartao">Cartão</option>
+                        <option value="dinheiro">Dinheiro</option>
+                        <option value="ifood">iFood</option>
+                    </select>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4 mt-6">
+                    <button type="button" id="deleteLancamentoBtn" class="w-full sm:w-auto flex-1 bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-4 rounded-md">Excluir</button>
+                    <button type="submit" class="w-full sm:w-auto flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-md">Salvar Alterações</button>
+                </div>
+                 <button type="button" id="closeEditModalBtn" class="w-full mt-4 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50"><div class="card rounded-lg shadow-xl p-6 max-w-sm w-full text-center"><p id="confirmationMessage" class="text-lg mb-6"></p><div class="flex justify-center gap-4"><button id="confirmBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded">Confirmar</button><button id="cancelBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded">Cancelar</button></div></div></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, where, setLogLevel, doc, updateDoc, deleteDoc, writeBatch, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'controle-vendas-default';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+
+        let app, db, auth;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            setLogLevel('debug');
+        } catch (e) { console.error("Erro ao inicializar o Firebase:", e); }
+        
+        // --- DOM ELEMENTS ---
+        const loader = document.getElementById('loader');
+        const appContent = document.getElementById('app-content');
+        const confirmationModal = document.getElementById('confirmationModal');
+        const confirmationMessage = document.getElementById('confirmationMessage');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        // Toast
+        const toastContainer = document.getElementById('toast-container');
+        // Edit Modal
+        const editLancamentoModal = document.getElementById('editLancamentoModal');
+        const editLancamentoForm = document.getElementById('editLancamentoForm');
+        const closeEditModalBtn = document.getElementById('closeEditModalBtn');
+        const deleteLancamentoBtn = document.getElementById('deleteLancamentoBtn');
+        // Tabs
+        const tabs = {
+            vendasDiarias: document.getElementById('tab-vendas-diarias'),
+            anteriores: document.getElementById('tab-anteriores'),
+            boletos: document.getElementById('tab-boletos'),
+            recorrentes: document.getElementById('tab-recorrentes'),
+            dashboard: document.getElementById('tab-dashboard'),
+            relatorios: document.getElementById('tab-relatorios')
+        };
+        const views = {
+            vendasDiarias: document.getElementById('view-vendas-diarias'),
+            anteriores: document.getElementById('view-anteriores'),
+            boletos: document.getElementById('view-boletos'),
+            recorrentes: document.getElementById('view-recorrentes'),
+            dashboard: document.getElementById('view-dashboard'),
+            relatorios: document.getElementById('view-relatorios')
+        };
+        // Lançamentos View
+        const vendaForm = document.getElementById('vendaForm');
+        const listaVendas = document.getElementById('listaVendas');
+        const totalEntradasEl = document.getElementById('totalEntradas');
+        const totalSaidasEl = document.getElementById('totalSaidas');
+        const saldoAtualEl = document.getElementById('saldoAtual');
+        const datePicker = document.getElementById('datePicker');
+        const dataHistorico = document.getElementById('dataHistorico');
+        const consolidadoForm = document.getElementById('consolidadoForm');
+        const totalPixEl = document.getElementById('totalPix');
+        const totalCartaoEl = document.getElementById('totalCartao');
+        const totalDinheiroEl = document.getElementById('totalDinheiro');
+        const totalIfoodEl = document.getElementById('totalIfood');
+        // Boletos View
+        const boletoForm = document.getElementById('boletoForm');
+        const listaBoletos = document.getElementById('listaBoletos');
+        const importBoletosBtn = document.getElementById('importBoletosBtn');
+        const bulkBoletosText = document.getElementById('bulkBoletos');
+        const filterStartDate = document.getElementById('filterStartDate');
+        const filterEndDate = document.getElementById('filterEndDate');
+        const filterBtn = document.getElementById('filterBtn');
+        const clearFilterBtn = document.getElementById('clearFilterBtn');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        const deleteAllBtn = document.getElementById('deleteAllBtn');
+        const boletosFiltradosCount = document.getElementById('boletosFiltradosCount');
+        const boletosFiltradosValor = document.getElementById('boletosFiltradosValor');
+        const searchBoletosInput = document.getElementById('searchBoletos');
+        // Recorrentes View
+        const recorrenteForm = document.getElementById('recorrenteForm');
+        const listaRecorrentes = document.getElementById('listaRecorrentes');
+        // Relatórios View
+        const relatorioStartDate = document.getElementById('relatorioStartDate');
+        const relatorioEndDate = document.getElementById('relatorioEndDate');
+        const gerarRelatorioBtn = document.getElementById('gerarRelatorioBtn');
+        const relatorioContent = document.getElementById('relatorio-content');
+        const relatorioPlaceholder = document.getElementById('relatorio-placeholder');
+        const relatorioLucroBruto = document.getElementById('relatorioLucroBruto');
+        const relatorioDespesas = document.getElementById('relatorioDespesas');
+        const relatorioLucroLiquido = document.getElementById('relatorioLucroLiquido');
+        const relatorioMargemLucro = document.getElementById('relatorioMargemLucro');
+        const exportButtonsContainer = document.getElementById('export-buttons');
+        // Dashboard View
+        const dashVendasHoje = document.getElementById('dash-vendas-hoje');
+        const dashSaidasHoje = document.getElementById('dash-saidas-hoje');
+        const dashSaldoHoje = document.getElementById('dash-saldo-hoje');
+        const dashLucroBrutoMes = document.getElementById('dash-lucro-bruto-mes');
+        const dashDespesasMes = document.getElementById('dash-despesas-mes');
+        const dashLucroLiquidoMes = document.getElementById('dash-lucro-liquido-mes');
+        const dashProximosBoletos = document.getElementById('dash-proximos-boletos');
+        const dashboardMonthSelect = document.getElementById('dashboardMonth');
+        const dashboardYearSelect = document.getElementById('dashboardYear');
+
+        let currentUserId = null;
+        let unsubscribeFromVendas = null;
+        let unsubscribeFromBoletos = null;
+        let unsubscribeFromRecorrentes = null;
+        let allBoletos = [];
+        let charts = {};
+        let allVendasDoDia = [];
+        let currentReportData = null;
+
+        // --- HELPER FUNCTIONS ---
+        const formatCurrency = (value) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+        const formatDate = (dateString) => { if (!dateString) return ''; const [year, month, day] = dateString.split('-'); return `${day}/${month}/${year}`; }
+        
+        const showToast = (message, type = 'success') => {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        const showConfirmation = (message, onConfirmCallback) => { confirmationMessage.textContent = message; confirmationModal.classList.remove('hidden'); confirmationModal.classList.add('flex'); const confirmHandler = () => { onConfirmCallback(); hideConfirmation(); }; const cancelHandler = () => { hideConfirmation(); }; const hideConfirmation = () => { confirmationModal.classList.add('hidden'); confirmBtn.removeEventListener('click', confirmHandler); cancelBtn.removeEventListener('click', cancelHandler); }; confirmBtn.addEventListener('click', confirmHandler, { once: true }); cancelBtn.addEventListener('click', cancelHandler, { once: true }); };
+        if (!app) showToast("Erro crítico ao conectar com o serviço.", "error");
+
+        // --- THEME SWITCHER ---
+        const themeToggle = document.getElementById('theme-toggle');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+
+        const applyTheme = (theme) => {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.documentElement.classList.remove('light');
+                darkIcon.classList.remove('hidden');
+                lightIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light');
+                darkIcon.classList.add('hidden');
+                lightIcon.classList.remove('hidden');
+            }
+        };
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = localStorage.getItem('theme') || 'dark';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+
+        // --- TAB SWITCHING ---
+        const switchTab = (activeTab) => {
+            Object.keys(tabs).forEach(key => { 
+                const tabButton = tabs[key];
+                const viewDiv = views[key];
+                if (tabButton && viewDiv) {
+                    const isActive = key === activeTab; 
+                    tabButton.classList.toggle('tab-active', isActive); 
+                    tabButton.classList.toggle('tab-inactive', !isActive); 
+                    viewDiv.classList.toggle('hidden', !isActive); 
+                }
+            });
+            if (unsubscribeFromVendas) unsubscribeFromVendas();
+            if (unsubscribeFromBoletos) unsubscribeFromBoletos();
+            if (unsubscribeFromRecorrentes) unsubscribeFromRecorrentes();
+
+            if (activeTab === 'dashboard') loadDashboardData();
+            if (activeTab === 'vendasDiarias') attachVendasListener(datePicker.value);
+            if (activeTab === 'boletos') attachBoletosListener();
+            if (activeTab === 'recorrentes') attachRecorrentesListener();
+        };
+        Object.keys(tabs).forEach(key => {
+            if(tabs[key]) {
+                tabs[key].addEventListener('click', () => switchTab(key))
+            }
+        });
+        
+        // --- LANÇAMENTOS LOGIC ---
+        const setInitialDate = () => { const today = new Date(); const localDate = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)); const todayString = localDate.toISOString().split('T')[0]; datePicker.value = todayString; document.getElementById('data_entrada').value = todayString; relatorioEndDate.value = todayString; const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); const firstDayString = new Date(firstDayOfMonth.getTime() - (firstDayOfMonth.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; relatorioStartDate.value = firstDayString; };
+        vendaForm.addEventListener('submit', async (e) => { e.preventDefault(); if (!currentUserId) return; const valor = parseFloat(document.getElementById('valor').value); if (isNaN(valor) || valor <= 0) return; const tipo = document.querySelector('input[name="tipo_lancamento"]:checked').value; const descricao = document.getElementById('descricao').value; if(tipo === 'saida' && !descricao) return showToast("A descrição é obrigatória para saídas.", "error"); const novoLancamento = { valor, tipo, data: datePicker.value, timestamp: new Date(), formaPagamento: tipo === 'entrada' ? document.getElementById('forma_pagamento_selecionada').value : null, descricao: tipo === 'saida' ? descricao : null }; try { await addDoc(collection(db, 'artifacts', appId, 'users', currentUserId, 'vendas'), novoLancamento); showToast("Lançamento salvo!"); vendaForm.reset(); document.querySelector('input[name="tipo_lancamento"][value="entrada"]').dispatchEvent(new Event('change')); } catch (error) { showToast("Erro ao salvar.", "error"); } });
+        consolidadoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUserId) return showToast("Usuário não autenticado.", "error");
+            const data = document.getElementById('consolidadoDate').value;
+            if (!data) return showToast("Por favor, selecione uma data.", "error");
+            
+            const vendas = [
+                { valor: parseFloat(document.getElementById('consolidadoPix').value), forma: 'pix', nome: 'PIX' },
+                { valor: parseFloat(document.getElementById('consolidadoCartao').value), forma: 'cartao', nome: 'Cartão' },
+                { valor: parseFloat(document.getElementById('consolidadoDinheiro').value), forma: 'dinheiro', nome: 'Dinheiro' },
+                { valor: parseFloat(document.getElementById('consolidadoIfood').value), forma: 'ifood', nome: 'iFood' },
+                { valor: parseFloat(document.getElementById('consolidadoSaidas').value), forma: null, nome: 'Saídas' }
+            ];
+
+            const lancamentosParaAdicionar = [];
+            const [year, month, day] = data.split('-');
+            const timestamp = new Date(year, month - 1, day, 12, 0, 0);
+
+            vendas.forEach(venda => {
+                if (!isNaN(venda.valor) && venda.valor > 0) {
+                    const tipo = venda.nome === 'Saídas' ? 'saida' : 'entrada';
+                    lancamentosParaAdicionar.push({ valor: venda.valor, tipo, data, timestamp, formaPagamento: venda.forma, descricao: `Total ${venda.nome} (Consolidado)` });
+                }
+            });
+
+            if (lancamentosParaAdicionar.length === 0) return showToast("Nenhum valor válido inserido.", "error");
+
+            try {
+                const batch = writeBatch(db);
+                const vendasCollection = collection(db, 'artifacts', appId, 'users', currentUserId, 'vendas');
+                lancamentosParaAdicionar.forEach(lancamento => { batch.set(doc(vendasCollection), lancamento); });
+                await batch.commit();
+                showToast(`Lançamentos consolidados adicionados para o dia ${formatDate(data)}.`);
+                consolidadoForm.reset();
+            } catch (error) { console.error("Erro ao salvar vendas consolidadas:", error); showToast("Erro ao salvar as vendas consolidadas.", "error"); }
+        });
+        const renderVendas = (vendas) => { 
+            allVendasDoDia = vendas;
+            listaVendas.innerHTML = ''; 
+            let totalEntradas = 0, totalSaidas = 0, totalPix = 0, totalCartao = 0, totalDinheiro = 0, totalIfood = 0;
+            if (vendas.length === 0) { 
+                listaVendas.innerHTML = '<p class="text-center py-4">Nenhum lançamento neste dia.</p>'; 
+            } else { 
+                vendas.sort((a, b) => b.timestamp.toMillis() - a.timestamp.toMillis()).forEach(venda => { 
+                    const isEntrada = venda.tipo === 'entrada'; 
+                    if (isEntrada) {
+                        totalEntradas += venda.valor;
+                        switch(venda.formaPagamento) {
+                            case 'pix': totalPix += venda.valor; break;
+                            case 'cartao': totalCartao += venda.valor; break;
+                            case 'dinheiro': totalDinheiro += venda.valor; break;
+                            case 'ifood': totalIfood += venda.valor; break;
+                        }
+                    } else { 
+                        totalSaidas += venda.valor; 
+                    }
+                    const itemDiv = document.createElement('div'); 
+                    itemDiv.dataset.id = venda.id;
+                    itemDiv.className = `card p-4 rounded-lg flex items-center justify-between shadow-md cursor-pointer transition-transform transform hover:scale-105 ${isEntrada ? 'bg-green-900/50' : 'bg-red-900/50'}`; 
+                    itemDiv.innerHTML = `<div class="flex items-center gap-4"><div><p class="font-semibold">${venda.descricao || (isEntrada ? 'Venda' : 'Saída')}</p><p class="text-sm">${venda.descricao && venda.descricao.includes('Consolidado') ? 'Total do Dia' : venda.timestamp.toDate().toLocaleTimeString('pt-BR')}</p></div></div><div class="text-right"><p class="font-bold text-lg ${isEntrada ? 'text-green-300' : 'text-red-300'}">${isEntrada ? '+' : '-'} ${formatCurrency(venda.valor)}</p>${isEntrada ? `<span class="text-xs bg-gray-700 px-2 py-1 rounded-full capitalize">${venda.formaPagamento}</span>` : ''}</div>`; 
+                    listaVendas.appendChild(itemDiv); 
+                }); 
+            } 
+            totalEntradasEl.textContent = formatCurrency(totalEntradas); 
+            totalSaidasEl.textContent = formatCurrency(totalSaidas); 
+            saldoAtualEl.textContent = formatCurrency(totalEntradas - totalSaidas);
+            totalPixEl.textContent = formatCurrency(totalPix);
+            totalCartaoEl.textContent = formatCurrency(totalCartao);
+            totalDinheiroEl.textContent = formatCurrency(totalDinheiro);
+            totalIfoodEl.textContent = formatCurrency(totalIfood);
+        };
+        const attachVendasListener = (dateString) => { if (unsubscribeFromVendas) unsubscribeFromVendas(); if (!currentUserId || !db || !dateString) return; dataHistorico.textContent = formatDate(dateString); listaVendas.innerHTML = '<p class="text-center py-4">Carregando...</p>'; const q = query(collection(db, 'artifacts', appId, 'users', currentUserId, 'vendas'), where("data", "==", dateString)); unsubscribeFromVendas = onSnapshot(q, (snap) => renderVendas(snap.docs.map(d => ({ id: d.id, ...d.data() }))), (err) => { console.error(err); showToast("Erro ao carregar.", "error"); }); };
+        datePicker.addEventListener('change', () => attachVendasListener(datePicker.value));
+        document.querySelectorAll('.payment-method-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.payment-method-btn').forEach(b => b.classList.replace('bg-indigo-600', 'bg-gray-700'));
+                btn.classList.replace('bg-gray-700', 'bg-indigo-600');
+                document.getElementById('forma_pagamento_selecionada').value = btn.dataset.payment;
+            });
+        });
+        document.querySelectorAll('input[name="tipo_lancamento"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const isEntrada = e.target.value === 'entrada';
+                document.getElementById('formaPagamentoContainer').style.display = isEntrada ? 'block' : 'none';
+                document.getElementById('descricaoContainer').style.display = isEntrada ? 'none' : 'block';
+            });
+        });
+
+        // --- EDIT LANCAMENTO LOGIC ---
+        listaVendas.addEventListener('click', (e) => {
+            const lancamentoEl = e.target.closest('[data-id]');
+            if (lancamentoEl) {
+                const lancamentoId = lancamentoEl.dataset.id;
+                const lancamento = allVendasDoDia.find(v => v.id === lancamentoId);
+                if (lancamento) {
+                    openEditModal(lancamento);
+                }
+            }
+        });
+
+        function openEditModal(lancamento) {
+            document.getElementById('editLancamentoId').value = lancamento.id;
+            document.getElementById('editValor').value = lancamento.valor;
+            document.getElementById('editDescricao').value = lancamento.descricao || '';
+            
+            const tipoRadios = document.querySelectorAll('input[name="edit_tipo_lancamento"]');
+            const editDescContainer = document.getElementById('editDescricaoContainer');
+            const editPagamentoContainer = document.getElementById('editFormaPagamentoContainer');
+
+            if (lancamento.tipo === 'entrada') {
+                tipoRadios[0].checked = true;
+                editDescContainer.style.display = 'none';
+                editPagamentoContainer.style.display = 'block';
+                document.getElementById('editFormaPagamento').value = lancamento.formaPagamento;
+            } else {
+                tipoRadios[1].checked = true;
+                editDescContainer.style.display = 'block';
+                editPagamentoContainer.style.display = 'none';
+            }
+            editLancamentoModal.classList.remove('hidden');
+            editLancamentoModal.classList.add('flex');
+        }
+
+        closeEditModalBtn.addEventListener('click', () => {
+            editLancamentoModal.classList.add('hidden');
+            editLancamentoModal.classList.remove('flex');
+        });
+
+        document.querySelectorAll('input[name="edit_tipo_lancamento"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const isEntrada = e.target.value === 'entrada';
+                document.getElementById('editFormaPagamentoContainer').style.display = isEntrada ? 'block' : 'none';
+                document.getElementById('editDescricaoContainer').style.display = isEntrada ? 'none' : 'block';
+            });
+        });
+
+        editLancamentoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editLancamentoId').value;
+            const valor = parseFloat(document.getElementById('editValor').value);
+            const tipo = document.querySelector('input[name="edit_tipo_lancamento"]:checked').value;
+            const descricao = document.getElementById('editDescricao').value;
+            const formaPagamento = document.getElementById('editFormaPagamento').value;
+
+            if (!id || isNaN(valor) || valor <= 0) {
+                return showToast("Dados inválidos.", "error");
+            }
+            if(tipo === 'saida' && !descricao) {
+                return showToast("Descrição é obrigatória para saídas.", "error");
+            }
+
+            const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'vendas', id);
+            const updatedData = {
+                valor,
+                tipo,
+                descricao: tipo === 'saida' ? descricao : null,
+                formaPagamento: tipo === 'entrada' ? formaPagamento : null,
+            };
+
+            try {
+                await updateDoc(docRef, updatedData);
+                showToast("Lançamento atualizado com sucesso!");
+                closeEditModalBtn.click();
+            } catch (error) {
+                showToast("Erro ao atualizar o lançamento.", "error");
+                console.error("Erro ao atualizar:", error);
+            }
+        });
+
+        deleteLancamentoBtn.addEventListener('click', () => {
+            const id = document.getElementById('editLancamentoId').value;
+            if (!id) return;
+
+            showConfirmation("Tem certeza que deseja excluir este lançamento?", async () => {
+                const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'vendas', id);
+                try {
+                    await deleteDoc(docRef);
+                    showToast("Lançamento excluído com sucesso!");
+                    closeEditModalBtn.click();
+                } catch (error) {
+                    showToast("Erro ao excluir o lançamento.", "error");
+                    console.error("Erro ao excluir:", error);
+                }
+            });
+        });
+
+        // --- BOLETOS LOGIC ---
+        boletoForm.addEventListener('submit', async (e) => { e.preventDefault(); if (!currentUserId) return; const valor = parseFloat(document.getElementById('valor_boleto').value); if (isNaN(valor) || valor <= 0) return; const novoBoleto = { fornecedor: document.getElementById('fornecedor').value.trim(), valor, codigoBarras: document.getElementById('codigo_barras').value.trim(), dataEntrada: document.getElementById('data_entrada').value, dataVencimento: document.getElementById('data_vencimento').value, timestamp: new Date() }; try { await addDoc(collection(db, 'artifacts', appId, 'users', currentUserId, 'boletos'), novoBoleto); showToast("Boleto salvo!"); boletoForm.reset(); setInitialDate(); } catch (error) { showToast("Erro ao salvar o boleto.", "error"); } });
+        const renderBoletos = (boletos) => { const totalCount = boletos.length; const totalValue = boletos.reduce((sum, boleto) => sum + boleto.valor, 0); boletosFiltradosCount.textContent = totalCount; boletosFiltradosValor.textContent = formatCurrency(totalValue); listaBoletos.innerHTML = ''; selectAllCheckbox.checked = false; if (boletos.length === 0) { listaBoletos.innerHTML = '<p class="text-center py-4">Nenhum boleto encontrado.</p>'; } else { boletos.sort((a, b) => new Date(a.dataVencimento) - new Date(b.dataVencimento)).forEach(boleto => { const itemDiv = document.createElement('div'); itemDiv.className = `card p-4 rounded-lg shadow-md flex items-center gap-4 transition-all`; itemDiv.innerHTML = `<input type="checkbox" data-id="${boleto.id}" class="boleto-checkbox h-5 w-5 rounded"><div class="flex-grow flex flex-col md:flex-row justify-between"><div><p class="font-bold text-lg">${boleto.fornecedor}</p><p class="text-sm">Venc: <span class="font-semibold">${formatDate(boleto.dataVencimento)}</span></p><p class="text-sm font-mono break-all">${boleto.codigoBarras || 'Sem código'}</p></div><div class="flex items-center"><div class="text-right mr-4"><p class="font-bold text-xl">${formatCurrency(boleto.valor)}</p></div><div class="flex flex-col space-y-2"><button data-id="${boleto.id}" class="excluir-btn bg-red-600 hover:bg-red-700 text-sm font-bold py-1 px-3 rounded">Excluir</button></div></div></div>`; listaBoletos.appendChild(itemDiv); }); } };
+        listaBoletos.addEventListener('click', async (e) => {
+            if (!currentUserId) return;
+            const id = e.target.dataset.id;
+            if (!id) return;
+            const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'boletos', id);
+            if (e.target.classList.contains('excluir-btn')) {
+                showConfirmation('Excluir este boleto permanentemente?', async () => { await deleteDoc(docRef); showToast('Boleto excluído.'); });
+            }
+        });
+        const attachBoletosListener = () => { if (unsubscribeFromBoletos) unsubscribeFromBoletos(); if (!currentUserId || !db) return; listaBoletos.innerHTML = '<p class="text-center py-4">Carregando...</p>'; const q = query(collection(db, 'artifacts', appId, 'users', currentUserId, 'boletos')); unsubscribeFromBoletos = onSnapshot(q, (snap) => { allBoletos = snap.docs.map(d => ({ id: d.id, ...d.data() })); filterAndRenderBoletos(); }, (err) => { console.error(err); showToast("Erro ao carregar boletos.", "error"); }); };
+        const filterAndRenderBoletos = () => { let filtered = [...allBoletos]; const searchTerm = searchBoletosInput.value.toLowerCase(); const startDate = filterStartDate.value; const endDate = filterEndDate.value; if (searchTerm) { filtered = filtered.filter(b => b.fornecedor.toLowerCase().includes(searchTerm) || b.valor.toString().includes(searchTerm)); } if (startDate) { filtered = filtered.filter(b => b.dataVencimento >= startDate); } if (endDate) { filtered = filtered.filter(b => b.dataVencimento <= endDate); } renderBoletos(filtered); };
+        filterBtn.addEventListener('click', filterAndRenderBoletos);
+        clearFilterBtn.addEventListener('click', () => { filterStartDate.value = ''; filterEndDate.value = ''; searchBoletosInput.value = ''; filterAndRenderBoletos(); });
+        searchBoletosInput.addEventListener('input', filterAndRenderBoletos);
+        selectAllCheckbox.addEventListener('change', (e) => { document.querySelectorAll('.boleto-checkbox').forEach(cb => cb.checked = e.target.checked); });
+        deleteSelectedBtn.addEventListener('click', () => { const selectedIds = [...document.querySelectorAll('.boleto-checkbox:checked')].map(cb => cb.dataset.id); if (selectedIds.length === 0) return showToast('Nenhum boleto selecionado.', 'error'); showConfirmation(`Excluir ${selectedIds.length} boletos?`, async () => { const batch = writeBatch(db); selectedIds.forEach(id => { batch.delete(doc(db, 'artifacts', appId, 'users', currentUserId, 'boletos', id)); }); await batch.commit(); showToast('Boletos excluídos.'); }); });
+        deleteAllBtn.addEventListener('click', () => { showConfirmation('TEM CERTEZA? Isso excluirá TODOS os boletos cadastrados.', async () => { const snapshot = await getDocs(query(collection(db, 'artifacts', appId, 'users', currentUserId, 'boletos'))); const batch = writeBatch(db); snapshot.forEach(doc => batch.delete(doc.ref)); await batch.commit(); showToast('Todos os boletos foram excluídos.'); }); });
+        const parseDateForImport = (dateStr) => { const parts = dateStr.split('/'); if (parts.length !== 3) return null; return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`; };
+        importBoletosBtn.addEventListener('click', async () => { if (!currentUserId) return; const text = bulkBoletosText.value.trim(); if (!text) return; const lines = text.split('\n'); const batch = writeBatch(db); let successCount = 0; lines.forEach(line => { try { const parts = line.split(/\t|\s{2,}/); if (parts.length < 4) return; const valorStr = parts[parts.length - 1].replace('R$', '').replace(/\./g, '').replace(',', '.').trim(); const valor = parseFloat(valorStr); const dataVencimento = parseDateForImport(parts[parts.length - 2].trim()); const dataEntrada = parseDateForImport(parts[parts.length - 3].trim()); const fornecedor = parts[parts.length - 4].trim(); const codigoBarras = parts.length > 4 ? parts.slice(0, -4).join(' ').trim() : ''; if (fornecedor && dataEntrada && dataVencimento && !isNaN(valor)) { const newBoleto = { codigoBarras: codigoBarras === '/' ? '' : codigoBarras, fornecedor, dataEntrada, dataVencimento, valor, timestamp: new Date() }; batch.set(doc(collection(db, 'artifacts', appId, 'users', currentUserId, 'boletos')), newBoleto); successCount++; } } catch (e) { console.warn("Linha ignorada:", line, e); } }); if (successCount > 0) { await batch.commit(); showToast(`${successCount} boletos importados.`); bulkBoletosText.value = ''; } else { showToast("Nenhum boleto válido encontrado para importar.", "error"); } });
+
+        // --- RECORRENTES LOGIC ---
+        recorrenteForm.addEventListener('submit', async (e) => { e.preventDefault(); if (!currentUserId) return; const valor = parseFloat(document.getElementById('recorrenteValor').value); const dia = parseInt(document.getElementById('recorrenteDia').value); if (isNaN(valor) || valor <= 0 || isNaN(dia) || dia < 1 || dia > 31) { return showToast("Dados inválidos.", "error"); } const novoRecorrente = { fornecedor: document.getElementById('recorrenteFornecedor').value.trim(), valor, diaDoMes: dia, tipo: 'saida', ultimoLancamento: null }; try { await addDoc(collection(db, 'artifacts', appId, 'users', currentUserId, 'recorrentes'), novoRecorrente); showToast("Recorrente salvo!"); recorrenteForm.reset(); } catch (error) { showToast("Erro ao salvar recorrente.", "error"); } });
+        const renderRecorrentes = (recorrentes) => { listaRecorrentes.innerHTML = ''; if (recorrentes.length === 0) { listaRecorrentes.innerHTML = '<p class="text-center py-4">Nenhum lançamento recorrente cadastrado.</p>'; } else { recorrentes.forEach(rec => { const itemDiv = document.createElement('div'); itemDiv.className = 'card p-4 rounded-lg flex items-center justify-between'; itemDiv.innerHTML = `<div><p class="font-bold">${rec.fornecedor}</p><p class="text-sm">Valor: ${formatCurrency(rec.valor)} | Vence todo dia ${rec.diaDoMes}</p></div><div class="flex gap-2"><button data-id="${rec.id}" class="lancar-recorrente-btn bg-blue-600 hover:bg-blue-700 text-sm font-bold py-1 px-3 rounded">Lançar Mês Atual</button><button data-id="${rec.id}" class="excluir-recorrente-btn bg-red-600 hover:bg-red-700 text-sm font-bold py-1 px-3 rounded">Excluir</button></div>`; listaRecorrentes.appendChild(itemDiv); }); } };
+        const attachRecorrentesListener = () => { if (unsubscribeFromRecorrentes) unsubscribeFromRecorrentes(); if (!currentUserId || !db) return; const q = query(collection(db, 'artifacts', appId, 'users', currentUserId, 'recorrentes')); unsubscribeFromRecorrentes = onSnapshot(q, (snap) => renderRecorrentes(snap.docs.map(d => ({ id: d.id, ...d.data() })))); };
+        listaRecorrentes.addEventListener('click', async (e) => { if (!currentUserId) return; const id = e.target.dataset.id; if (!id) return; const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'recorrentes', id); if (e.target.classList.contains('excluir-recorrente-btn')) { showConfirmation('Excluir este lançamento recorrente?', async () => { await deleteDoc(docRef); showToast("Recorrente excluído."); }); } if (e.target.classList.contains('lancar-recorrente-btn')) { const docSnap = await getDoc(docRef); if(docSnap.exists()) { const data = docSnap.data(); const today = new Date(); const year = today.getFullYear(); const month = today.getMonth(); const date = new Date(year, month, data.diaDoMes); const dateString = date.toISOString().split('T')[0]; const novoLancamento = { valor: data.valor, tipo: 'saida', data: dateString, timestamp: date, formaPagamento: null, descricao: `Recorrente: ${data.fornecedor}` }; await addDoc(collection(db, 'artifacts', appId, 'users', currentUserId, 'vendas'), novoLancamento); showToast(`Lançamento para "${data.fornecedor}" criado com sucesso.`); } } });
+
+        // --- RELATÓRIOS LOGIC ---
+        gerarRelatorioBtn.addEventListener('click', async () => {
+            const startDate = relatorioStartDate.value; const endDate = relatorioEndDate.value;
+            if (!startDate || !endDate) return showToast("Por favor, selecione a data de início e de fim.", "error");
+            if (!currentUserId || !db) return showToast("Usuário não conectado.", "error");
+            relatorioPlaceholder.classList.remove('hidden'); relatorioPlaceholder.textContent = "Gerando relatório..."; relatorioContent.classList.add('hidden');
+            exportButtonsContainer.classList.add('hidden');
+            try {
+                const lancamentosQuery = query(collection(db, 'artifacts', appId, 'users', currentUserId, 'vendas'), where('data', '>=', startDate), where('data', '<=', endDate));
+                const lancamentosSnap = await getDocs(lancamentosQuery);
+                const lancamentosFiltrados = lancamentosSnap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                
+                const boletosQuery = query(collection(db, 'artifacts', appId, 'users', currentUserId, 'boletos'), where('dataVencimento', '>=', startDate), where('dataVencimento', '<=', endDate));
+                const boletosSnap = await getDocs(boletosQuery);
+                const boletosFiltrados = boletosSnap.docs.map(doc => doc.data());
+
+                currentReportData = processarDadosRelatorio(lancamentosFiltrados, boletosFiltrados, startDate, endDate);
+                exportButtonsContainer.classList.remove('hidden');
+
+            } catch (error) { console.error("Erro ao gerar relatório:", error); showToast("Não foi possível gerar o relatório.", "error"); relatorioPlaceholder.textContent = "Ocorreu um erro."; relatorioPlaceholder.classList.remove('hidden'); }
+        });
+        const processarDadosRelatorio = (lancamentos, boletos, startDate, endDate) => {
+            let totalVendas = 0, totalSaidas = 0;
+            const vendasPorTipo = { pix: 0, cartao: 0, dinheiro: 0, ifood: 0 };
+            const vendasPorDiaSemana = [0, 0, 0, 0, 0, 0, 0];
+            const vendasPorHora = Array(24).fill(0).map(() => ({ total: 0, count: 0 }));
+            const fluxoDiario = {};
+            const despesasPorFornecedor = {};
+            
+            const d = new Date(startDate + 'T12:00:00Z'); const endD = new Date(endDate + 'T12:00:00Z');
+            while(d <= endD) { const dateString = d.toISOString().split('T')[0]; fluxoDiario[dateString] = { entradas: 0, saidas: 0 }; d.setUTCDate(d.getUTCDate() + 1); }
+
+            lancamentos.forEach(l => { 
+                const dataLancamento = l.timestamp.toDate(); 
+                if (l.tipo === 'entrada') { 
+                    totalVendas += l.valor; 
+                    if (vendasPorTipo[l.formaPagamento] !== undefined) vendasPorTipo[l.formaPagamento] += l.valor; 
+                    if(fluxoDiario[l.data]) fluxoDiario[l.data].entradas += l.valor; 
+                    const diaSemana = dataLancamento.getDay(); 
+                    vendasPorDiaSemana[diaSemana] += l.valor; 
+                    const hora = dataLancamento.getHours(); 
+                    vendasPorHora[hora].total += l.valor; 
+                    vendasPorHora[hora].count++; 
+                } else { 
+                    totalSaidas += l.valor; 
+                    if(fluxoDiario[l.data]) fluxoDiario[l.data].saidas += l.valor; 
+                    const fornecedor = l.descricao.replace('Pagamento Boleto: ', '').replace('Recorrente: ', '');
+                    despesasPorFornecedor[fornecedor] = (despesasPorFornecedor[fornecedor] || 0) + l.valor;
+                } 
+            });
+
+            boletos.forEach(b => {
+                totalSaidas += b.valor;
+                if(fluxoDiario[b.dataVencimento]) fluxoDiario[b.dataVencimento].saidas += b.valor;
+                despesasPorFornecedor[b.fornecedor] = (despesasPorFornecedor[b.fornecedor] || 0) + b.valor;
+            });
+            
+            const lucroLiquido = totalVendas - totalSaidas; 
+            const margemLucro = totalVendas > 0 ? (lucroLiquido / totalVendas) * 100 : 0;
+            
+            relatorioLucroBruto.textContent = formatCurrency(totalVendas); 
+            relatorioDespesas.textContent = formatCurrency(totalSaidas); 
+            relatorioLucroLiquido.textContent = formatCurrency(lucroLiquido); 
+            relatorioMargemLucro.textContent = `${margemLucro.toFixed(2)}%`;
+            
+            const destroyChart = (chart) => { if (chart) chart.destroy(); return null; };
+            Object.values(charts).forEach(chart => destroyChart(chart));
+            
+            const chartFontColor = document.documentElement.classList.contains('dark') ? '#D1D5DB' : '#374151';
+            Chart.defaults.color = chartFontColor;
+
+            charts.vendasPorTipo = new Chart(document.getElementById('vendasPorTipoChart'), { type: 'pie', data: { labels: ['PIX', 'Cartão', 'Dinheiro', 'iFood'], datasets: [{ data: [vendasPorTipo.pix, vendasPorTipo.cartao, vendasPorTipo.dinheiro, vendasPorTipo.ifood], backgroundColor: ['#6366F1', '#3B82F6', '#10B981', '#F97316'], borderColor: 'var(--card-bg)' }] }, options: { responsive: true, plugins: { legend: { position: 'top', labels: { color: chartFontColor } } } } });
+            const sortedForn = Object.entries(despesasPorFornecedor).sort(([,a],[,b]) => b-a).slice(0, 5); 
+            charts.topFornecedores = new Chart(document.getElementById('topFornecedoresChart'), { type: 'bar', data: { labels: sortedForn.map(item => item[0]), datasets: [{ label: 'Valor Pago', data: sortedForn.map(item => item[1]), backgroundColor: '#A78BFA' }] }, options: { indexAxis: 'y', responsive: true, scales: { x: { ticks: { color: chartFontColor }, grid: { color: 'var(--border-color)' } }, y: { ticks: { color: chartFontColor }, grid: { color: 'var(--border-color)' } } }, plugins: { legend: { display: false } } } });
+            charts.vendasDiaSemana = new Chart(document.getElementById('vendasDiaSemanaChart'), { type: 'bar', data: { labels: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'], datasets: [{ label: 'Vendas', data: vendasPorDiaSemana, backgroundColor: '#60A5FA' }] }, options: { responsive: true, scales: { y: { ticks: { color: chartFontColor }, grid: { color: 'var(--border-color)' } }, x: { ticks: { color: chartFontColor }, grid: { color: 'var(--border-color)' } } }, plugins: { legend: { display: false } } } });
+            
+            const volumePorHora = vendasPorHora.map(h => h.total);
+            const ticketMedioPorHora = vendasPorHora.map(h => h.count > 0 ? h.total / h.count : 0);
+            charts.ticketMedioHora = new Chart(document.getElementById('ticketMedioHoraChart'), {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}h`),
+                    datasets: [
+                        {
+                            label: 'Volume de Vendas (R$)',
+                            data: volumePorHora,
+                            backgroundColor: '#3B82F6', // Blue for bars
+                            yAxisID: 'yVolume',
+                        },
+                        {
+                            label: 'Ticket Médio (R$)',
+                            data: ticketMedioPorHora,
+                            backgroundColor: '#F97316', // Orange for line
+                            borderColor: '#F97316',
+                            type: 'line',
+                            yAxisID: 'yTicket',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: { ticks: { color: chartFontColor }, grid: { color: 'var(--border-color)' } },
+                        yVolume: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Volume de Vendas (R$)' },
+                            ticks: { color: chartFontColor },
+                            grid: { drawOnChartArea: false },
+                        },
+                        yTicket: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Ticket Médio (R$)' },
+                            ticks: { color: chartFontColor },
+                            grid: { drawOnChartArea: true, },
+                        }
+                    }
+                }
+            });
+
+            const lucroPorDia = Object.values(fluxoDiario).map(d => d.entradas - d.saidas); 
+            charts.lucroLiquidoDia = new Chart(document.getElementById('lucroLiquidoDiaChart'), { type: 'bar', data: { labels: Object.keys(fluxoDiario).map(d => formatDate(d)), datasets: [{ label: 'Lucro Líquido', data: lucroPorDia, backgroundColor: lucroPorDia.map(v => v >= 0 ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)') }] }, options: { responsive: true, scales: { y: { ticks: { color: chartFontColor }, grid: { color: 'var(--border-color)' } }, x: { ticks: { color: chartFontColor }, grid: { color: 'var(--border-color)' } } }, plugins: { legend: { display: false } } } });
+            relatorioPlaceholder.classList.add('hidden'); relatorioContent.classList.remove('hidden');
+
+            return { lancamentos, totalVendas, totalSaidas, lucroLiquido };
+        };
+        document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const today = new Date();
+                let start, end = new Date();
+                switch(btn.id) {
+                    case 'quick-filter-this-month':
+                        start = new Date(today.getFullYear(), today.getMonth(), 1);
+                        end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                        break;
+                    case 'quick-filter-last-month':
+                        start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                        end = new Date(today.getFullYear(), today.getMonth(), 0);
+                        break;
+                    case 'quick-filter-this-year':
+                        start = new Date(today.getFullYear(), 0, 1);
+                        end = new Date(today.getFullYear(), 11, 31);
+                        break;
+                }
+                relatorioStartDate.value = start.toISOString().split('T')[0];
+                relatorioEndDate.value = end.toISOString().split('T')[0];
+                gerarRelatorioBtn.click();
+            });
+        });
+
+        // --- EXPORT LOGIC ---
+        document.getElementById('export-csv-btn').addEventListener('click', () => {
+            if (!currentReportData || !currentReportData.lancamentos) {
+                showToast("Gere um relatório primeiro.", "error");
+                return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,Data,Hora,Tipo,Descricao,Forma de Pagamento,Valor\n";
+            currentReportData.lancamentos.forEach(l => {
+                const row = [
+                    formatDate(l.data),
+                    l.timestamp.toDate().toLocaleTimeString('pt-BR'),
+                    l.tipo,
+                    `"${l.descricao || ''}"`,
+                    l.formaPagamento || '',
+                    l.valor.toFixed(2)
+                ].join(",");
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `relatorio_${relatorioStartDate.value}_a_${relatorioEndDate.value}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        document.getElementById('export-pdf-btn').addEventListener('click', () => {
+            if (!currentReportData || !currentReportData.lancamentos) {
+                showToast("Gere um relatório primeiro.", "error");
+                return;
+            }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.text(`Relatório Financeiro`, 14, 16);
+            doc.setFontSize(10);
+            doc.text(`Período: ${formatDate(relatorioStartDate.value)} a ${formatDate(relatorioEndDate.value)}`, 14, 22);
+
+            doc.autoTable({
+                startY: 30,
+                head: [['Data', 'Tipo', 'Descrição', 'Pagamento', 'Valor (R$)']],
+                body: currentReportData.lancamentos.map(l => [
+                    formatDate(l.data),
+                    l.tipo,
+                    l.descricao || '-',
+                    l.formaPagamento || '-',
+                    formatCurrency(l.valor)
+                ]),
+                theme: 'striped',
+                headStyles: { fillColor: [79, 70, 229] }
+            });
+
+            const finalY = doc.lastAutoTable.finalY || 40;
+            doc.setFontSize(12);
+            doc.text('Resumo do Período', 14, finalY + 10);
+            doc.autoTable({
+                startY: finalY + 15,
+                body: [
+                    ['Total de Vendas', formatCurrency(currentReportData.totalVendas)],
+                    ['Total de Despesas', formatCurrency(currentReportData.totalSaidas)],
+                    ['Lucro Líquido', formatCurrency(currentReportData.lucroLiquido)],
+                ],
+                theme: 'plain',
+                styles: { fontSize: 10 }
+            });
+            
+            doc.save(`relatorio_${relatorioStartDate.value}_a_${relatorioEndDate.value}.pdf`);
+        });
+
+        // --- DASHBOARD LOGIC ---
+        const populateDashboardFilters = () => {
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const currentMonth = today.getMonth();
+            const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            dashboardMonthSelect.innerHTML = months.map((m, i) => `<option value="${i}" ${i === currentMonth ? 'selected' : ''}>${m}</option>`).join('');
+            dashboardYearSelect.innerHTML = '';
+            for (let y = currentYear + 1; y >= currentYear - 5; y--) {
+                dashboardYearSelect.innerHTML += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`;
+            }
+        };
+        const loadDashboardData = async () => {
+            if (!currentUserId || !db) return;
+            // Resumo de Hoje
+            const today = new Date();
+            const todayStr = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+            const lancamentosHojeQuery = query(collection(db, 'artifacts', appId, 'users', currentUserId, 'vendas'), where('data', '==', todayStr));
+            const lancamentosHojeSnap = await getDocs(lancamentosHojeQuery);
+            let vendasHoje = 0, saidasHoje = 0;
+            lancamentosHojeSnap.forEach(doc => { const l = doc.data(); if (l.tipo === 'entrada') vendasHoje += l.valor; else saidasHoje += l.valor; });
+            dashVendasHoje.textContent = formatCurrency(vendasHoje); dashSaidasHoje.textContent = formatCurrency(saidasHoje); dashSaldoHoje.textContent = formatCurrency(vendasHoje - saidasHoje);
+
+            // Resumo do Mês Selecionado
+            const selectedMonth = parseInt(dashboardMonthSelect.value);
+            const selectedYear = parseInt(dashboardYearSelect.value);
+            const startOfMonth = new Date(selectedYear, selectedMonth, 1).toISOString().split('T')[0];
+            const endOfMonth = new Date(selectedYear, selectedMonth + 1, 0).toISOString().split('T')[0];
+            
+            const lancamentosMesQuery = query(collection(db, 'artifacts', appId, 'users', currentUserId, 'vendas'), where('data', '>=', startOfMonth), where('data', '<=', endOfMonth));
+            const lancamentosMesSnap = await getDocs(lancamentosMesQuery);
+            let vendasMes = 0, despesasMes = 0;
+            lancamentosMesSnap.forEach(doc => { const l = doc.data(); if (l.tipo === 'entrada') vendasMes += l.valor; else despesasMes += l.valor; });
+
+            const boletosMesQuery = query(collection(db, 'artifacts', appId, 'users', currentUserId, 'boletos'), where('dataVencimento', '>=', startOfMonth), where('dataVencimento', '<=', endOfMonth));
+            const boletosMesSnap = await getDocs(boletosMesQuery);
+            boletosMesSnap.forEach(doc => {
+                despesasMes += doc.data().valor;
+            });
+
+            dashLucroBrutoMes.textContent = formatCurrency(vendasMes); 
+            dashDespesasMes.textContent = formatCurrency(despesasMes); 
+            dashLucroLiquidoMes.textContent = formatCurrency(vendasMes - despesasMes);
+            
+            // Próximos Boletos
+            const proximosBoletosQuery = query(collection(db, 'artifacts', appId, 'users', currentUserId, 'boletos'));
+            const proximosBoletosSnap = await getDocs(proximosBoletosQuery);
+            
+            const allPendingBoletos = proximosBoletosSnap.docs.map(doc => doc.data());
+            const futurePendingBoletos = allPendingBoletos
+                .filter(b => b.dataVencimento >= todayStr)
+                .sort((a,b) => new Date(a.dataVencimento) - new Date(b.dataVencimento));
+
+            dashProximosBoletos.innerHTML = '';
+            if (futurePendingBoletos.length === 0) { 
+                dashProximosBoletos.innerHTML = '<p>Nenhum boleto pendente.</p>'; 
+            } else {
+                futurePendingBoletos.slice(0, 5).forEach(b => { 
+                    dashProximosBoletos.innerHTML += `<div class="text-sm"><p class="font-semibold">${b.fornecedor}</p><p>${formatDate(b.dataVencimento)} - ${formatCurrency(b.valor)}</p></div>`; 
+                });
+            }
+        };
+        dashboardMonthSelect.addEventListener('change', loadDashboardData);
+        dashboardYearSelect.addEventListener('change', loadDashboardData);
+
+        // --- INITIALIZATION & AUTH ---
+        onAuthStateChanged(auth, (user) => {
+            if (user && db) {
+                currentUserId = user.uid;
+                setInitialDate();
+                populateDashboardFilters();
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                applyTheme(savedTheme);
+                switchTab('vendasDiarias');
+                loader.classList.add('hidden');
+                appContent.classList.remove('hidden');
+            } else {
+                currentUserId = null;
+                loader.classList.add('hidden');
+                appContent.classList.remove('hidden');
+                if (!db) showToast("A conexão com o banco de dados falhou.", "error");
+            }
+        });
+
+        (async () => {
+            try {
+                if(auth) {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                    else await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Erro na autenticação:", error);
+                showToast("Falha na autenticação.", "error");
+                loader.classList.add('hidden');
+            }
+        })();
+    </script>
+</body>
+</html>
